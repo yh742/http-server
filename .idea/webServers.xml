@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="50059496-c80e-4980-af1b-a801cad0a24e" name="remote_docker" url="http://127.0.0.1">
+        <fileTransfer host="127.0.0.1" port="3022" rootFolder="/root" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="3022" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

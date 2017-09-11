@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="remote_docker">
+    <serverData>
+      <paths name="remote_docker">
+        <serverdata>
+          <mappings>
+            <mapping deploy="code/server" local="$PROJECT_DIR$" web="/root/code/server/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
