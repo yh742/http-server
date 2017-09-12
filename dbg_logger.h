@@ -11,7 +11,7 @@
 #define STR_ERROR() \
     (errno == 0 ? "None" : strerror(errno))
 #define ERR_CHECK(A, M, ...) \
-    if (!(A)) {DBG_ERROR(M, ##__VA_ARGS__);errno = 0;}
+    if (!(A)) {DBG_ERROR(M, ##__VA_ARGS__); errno = 0; goto error_exit;}
 #define DBG_ERROR(M, ...) \
     dbg_log_print(__FILE__, __LINE__, "[ERROR]: %s. " M, STR_ERROR(), ##__VA_ARGS__)
 #define DBG_PRINT(...) \
