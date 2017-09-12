@@ -82,6 +82,12 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/Users/seanhsu/CLionProjects/Liso_Server/dbg_logger.c">
+			<Option target="Liso_Server"/>
+		</Unit>
+		<Unit filename="/Users/seanhsu/CLionProjects/Liso_Server/dbg_logger.h">
+			<Option target="Liso_Server"/>
+		</Unit>
 		<Unit filename="/Users/seanhsu/CLionProjects/Liso_Server/echo_client.c">
 			<Option target="Liso_Server"/>
 		</Unit>

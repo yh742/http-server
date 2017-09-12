@@ -1,1 +1,1 @@
-/Library/Developer/CommandLineTools/usr/bin/cc -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/Liso_Server.dir/echo_server.c.o CMakeFiles/Liso_Server.dir/echo_client.c.o  -o Liso_Server 
+/Library/Developer/CommandLineTools/usr/bin/cc -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/Liso_Server.dir/echo_server.c.o CMakeFiles/Liso_Server.dir/echo_client.c.o CMakeFiles/Liso_Server.dir/dbg_logger.c.o  -o Liso_Server 

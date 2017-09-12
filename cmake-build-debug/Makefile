@@ -123,6 +123,33 @@ Liso_Server/fast:
 	$(MAKE) -f CMakeFiles/Liso_Server.dir/build.make CMakeFiles/Liso_Server.dir/build
 .PHONY : Liso_Server/fast
 
+dbg_logger.o: dbg_logger.c.o
+
+.PHONY : dbg_logger.o
+
+# target to build an object file
+dbg_logger.c.o:
+	$(MAKE) -f CMakeFiles/Liso_Server.dir/build.make CMakeFiles/Liso_Server.dir/dbg_logger.c.o
+.PHONY : dbg_logger.c.o
+
+dbg_logger.i: dbg_logger.c.i
+
+.PHONY : dbg_logger.i
+
+# target to preprocess a source file
+dbg_logger.c.i:
+	$(MAKE) -f CMakeFiles/Liso_Server.dir/build.make CMakeFiles/Liso_Server.dir/dbg_logger.c.i
+.PHONY : dbg_logger.c.i
+
+dbg_logger.s: dbg_logger.c.s
+
+.PHONY : dbg_logger.s
+
+# target to generate assembly for a file
+dbg_logger.c.s:
+	$(MAKE) -f CMakeFiles/Liso_Server.dir/build.make CMakeFiles/Liso_Server.dir/dbg_logger.c.s
+.PHONY : dbg_logger.c.s
+
 echo_client.o: echo_client.c.o
 
 .PHONY : echo_client.o
@@ -186,6 +213,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... Liso_Server"
+	@echo "... dbg_logger.o"
+	@echo "... dbg_logger.i"
+	@echo "... dbg_logger.s"
 	@echo "... echo_client.o"
 	@echo "... echo_client.i"
 	@echo "... echo_client.s"
