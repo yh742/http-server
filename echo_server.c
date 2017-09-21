@@ -20,13 +20,12 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include "dbg_logger.h"
-
+#include "parse.h"
 
 #define ECHO_PORT 9999
-#define BUF_SIZE 4096
+#define BUF_SIZE 8192
 
-int close_socket(int sock)
-{
+int close_socket(int sock) {
     if (close(sock))
     {
         fprintf(stderr, "Failed closing socket.\n");
@@ -35,9 +34,31 @@ int close_socket(int sock)
     return 0;
 }
 
-int main(int argc, char* argv[])
-{
-    int sock, client_sock, i;
+int read_socket(char* buf, int sock_fd){
+    int readret, index;
+    readret = recv(sock_fd, buf, BUF_SIZE, 0);
+    if (readret == 0){
+        // if the other side has hung up
+        return 0;
+    }
+    else if (readret < 0){
+        // if the error occurs
+        return -1;
+    }
+    Request* request = parse(buf, BUF_SIZE, sock_fd);
+    DBG_PRINT("Http Method %s\n",request->http_method);
+    DBG_PRINT("Http Version %s\n",request->http_version);
+    DBG_PRINT("Http Uri %s\n",request->http_uri);
+    DBG_PRINT("Request Header\n");
+    for(index = 0;index < request->header_count;index++){
+        DBG_PRINT("Header Name: %s, Header Value: %s\n",request->headers[index].header_name,request->headers[index].header_value);
+    }
+    free_requests(request);
+    return 1;
+}
+
+int main(int argc, char* argv[]) {
+    int sock, client_sock, i, enable;
     ssize_t readret;
     socklen_t cli_size;
     struct sockaddr_in addr, cli_addr;
@@ -49,6 +70,12 @@ int main(int argc, char* argv[])
     if ((sock = socket(PF_INET, SOCK_STREAM, 0)) == -1)
     {
         fprintf(stderr, "Failed creating socket.\n");
+        return EXIT_FAILURE;
+    }
+
+    enable = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0){
+        fprintf(stderr, "SetSockOpt Failed.\n");
         return EXIT_FAILURE;
     }
 
@@ -99,18 +126,12 @@ int main(int argc, char* argv[])
                     FD_SET(client_sock, &act_fd_set);
                 }
                 else {
-                    // existing connection requests
-                    if ((readret = recv(i, buf, BUF_SIZE, 0)) >= 1) {
-                        int sentret =  send(i, buf, readret, 0);
-                        DBG_PRINT("Checkpoint %d. %d vs %d", 8, readret, sentret);
-                        ERR_CHECK(sentret == readret, "Error sending to client %d vs. %d.", readret, sentret);
-                        memset(buf, 0, BUF_SIZE);
-                    }
-                    else if (readret == 0){
+                    readret = read_socket(buf, i);
+                    if (readret == 0) {
                         close_socket(i);
                         FD_CLR(i, &act_fd_set);
                     }
-                    else{
+                    else if (readret < 0) {
                         goto error_exit;
                     }
                 }
