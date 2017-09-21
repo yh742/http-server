@@ -100,62 +100,23 @@ int main(int argc, char* argv[])
                 }
                 else {
                     // existing connection requests
-                    if ((readret = recv(i, buf, BUF_SIZE, 0)) >= 1)
-                    {
+                    if ((readret = recv(i, buf, BUF_SIZE, 0)) >= 1) {
                         int sentret =  send(i, buf, readret, 0);
                         DBG_PRINT("Checkpoint %d. %d vs %d", 8, readret, sentret);
                         ERR_CHECK(sentret == readret, "Error sending to client %d vs. %d.", readret, sentret);
                         memset(buf, 0, BUF_SIZE);
                     }
+                    else if (readret == 0){
+                        close_socket(i);
+                        FD_CLR(i, &act_fd_set);
+                    }
+                    else{
+                        goto error_exit;
+                    }
                 }
             }
         }
     }
-
-
-    /* finally, loop waiting for input and then write it back */
-    /*
-    while (1)
-    {
-        cli_size = sizeof(cli_addr);
-        if ((client_sock = accept(sock, (struct sockaddr *) &cli_addr,
-                                  &cli_size)) == -1)
-        {
-            close(sock);
-            fprintf(stderr, "Error accepting connection.\n");
-            return EXIT_FAILURE;
-        }
-
-        readret = 0;
-
-        while((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
-        {
-            if (send(client_sock, buf, readret, 0) != readret)
-            {
-                close_socket(client_sock);
-                close_socket(sock);
-                fprintf(stderr, "Error sending to client.\n");
-                return EXIT_FAILURE;
-            }
-            memset(buf, 0, BUF_SIZE);
-        }
-
-        if (readret == -1)
-        {
-            close_socket(client_sock);
-            close_socket(sock);
-            fprintf(stderr, "Error reading from client socket.\n");
-            return EXIT_FAILURE;
-        }
-
-        if (close_socket(client_sock))
-        {
-            close_socket(sock);
-            fprintf(stderr, "Error closing client socket.\n");
-            return EXIT_FAILURE;
-        }
-    }
-    */
 
 error_exit:
     close_socket(sock);
