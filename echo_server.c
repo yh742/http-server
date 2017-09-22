@@ -19,8 +19,9 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include "dbg_logger.h"
+#include "helper.h"
 #include "parse.h"
+#include "protocol.h"
 
 #define ECHO_PORT 9999
 #define BUF_SIZE 8192
@@ -39,13 +40,24 @@ int read_socket(char* buf, int sock_fd){
     readret = recv(sock_fd, buf, BUF_SIZE, 0);
     if (readret == 0){
         // if the other side has hung up
-        return 0;
+        return 1;
     }
     else if (readret < 0){
         // if the error occurs
         return -1;
     }
     Request* request = parse(buf, BUF_SIZE, sock_fd);
+    if (request == NULL) {
+        DBG_PRINT("Malformed Request");
+        // Format of header is not correct
+        send_error(sock_fd, BAD_REQUEST);
+        // Return 1
+        // Should keep serving requests until client hangs up
+        //close_socket(sock_fd);
+        return 1;
+    }
+    // print debug trace
+    DBG_PRINT("Request Socket %d\n", sock_fd);
     DBG_PRINT("Http Method %s\n",request->http_method);
     DBG_PRINT("Http Version %s\n",request->http_version);
     DBG_PRINT("Http Uri %s\n",request->http_uri);

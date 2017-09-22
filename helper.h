@@ -20,6 +20,9 @@
 // gets current time stamp
 void get_current_time(char (*time_str)[], size_t maxsize);
 
+// converts integer to alpha
+int itoa(char* buf, int number);
+
 // prints to debug file
 void dbg_log_print(char* fname, int lnum, char* fmt, ...);
 

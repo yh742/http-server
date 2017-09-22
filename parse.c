@@ -1,4 +1,5 @@
 #include "parse.h"
+#include "helper.h"
 
 /**
 * Given a char buffer returns the parsed request headers
@@ -51,15 +52,31 @@ Request * parse(char *buffer, int size, int socketFd) {
         Request *request = (Request *) malloc(sizeof(Request));
         request->header_count=0;
         //TODO You will need to handle resizing this in parser.y
-        request->headers = (Request_header *) malloc(sizeof(Request_header)*1);
+        request->headers = (Http_header *) malloc(sizeof(Http_header)*1);
         set_parsing_options(buf, i, request);
 
         if (yyparse() == SUCCESS) {
+            int i = get_header_value(request->headers, request->header_count, "Accept");
+            DBG_PRINT("Accept Index: %d", i);
             return request;
         }
+        else {
+            DBG_PRINT("yyparse() failed.");
+            return NULL;
+        }
     }
-    //TODO Handle Malformed Requests
-    printf("Parsing Failed\n");
+    //TODO implement reading message body
+    return NULL;
+}
+
+int get_header_value(const Http_header* start_hdr, int count, const char* name){
+    int index;
+    for (index = 0; index < count; index++){
+        if (!strcmp(start_hdr[index].header_name, name)){
+            return index;
+        }
+    }
+    return -1;
 }
 
 void free_requests(Request* request) {

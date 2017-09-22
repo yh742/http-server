@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -I. -DYACCDEBUG
-DEPS = dbg_logger.h parse.h y.tab.h
-OBJ = echo_server.o dbg_logger.o y.tab.o lex.yy.o parse.o
+DEPS = helper.h parse.h y.tab.h protocol.h
+OBJ = echo_server.o helper.o y.tab.o lex.yy.o parse.o protocol.o
 FLAGS = -g -Wall
 
 default: all

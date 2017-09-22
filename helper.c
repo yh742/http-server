@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdarg.h>
-#include "dbg_logger.h"
+#include "helper.h"
 
 #define LOG_FNAME "dbg.txt"
 
@@ -17,7 +17,11 @@ void get_current_time(char (*time_str)[], size_t maxsize) {
 
     time(&t);
     timeinfo = localtime(&t);
-    strftime(*time_str, maxsize, "%c", timeinfo);
+    strftime(*time_str, maxsize, "%a, %d %b %Y %X %Z", timeinfo);
+}
+
+int itoa(char* buf, int number){
+    return sprintf(buf, "%d", number);
 }
 
 void dbg_log_print(char* fname, int lnum, char* fmt, ...) {

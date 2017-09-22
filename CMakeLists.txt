@@ -3,5 +3,5 @@ project(Liso_Server)
 
 set(CMAKE_C_STANDARD 99)
 
-set(SOURCE_FILES echo_server.c echo_client.c dbg_logger.h dbg_logger.c parse.c parse.h)
+set(SOURCE_FILES echo_server.c echo_client.c helper.h helper.c parse.c parse.h protocol.c protocol.h)
 add_executable(Liso_Server ${SOURCE_FILES})

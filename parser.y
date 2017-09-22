@@ -13,7 +13,7 @@
 #define YYERROR_VERBOSE
 #ifdef YACCDEBUG
 #include <stdio.h>
-#include "dbg_logger.h"
+#include "helper.h"
 #define YPRINTF(...) DBG_PRINT(__VA_ARGS__)
 #else
 #define YPRINTF(...)
@@ -199,8 +199,14 @@ request_header: token ows t_colon ows text ows t_crlf {
 	YPRINTF("request_header:\n%s\n%s\n",$1,$5);
     // if list is not empty allocate space for another one
     if (parsing_request->header_count != 0){
-        parsing_request->headers = (Request_header*)realloc(parsing_request->headers,
-        ((parsing_request->header_count + 1)* sizeof(Request_header)));
+        parsing_request->headers = (Http_header*)realloc(parsing_request->headers,
+        ((parsing_request->header_count + 1)* sizeof(Http_header)));
+    }
+    // Check for overflow
+    if (strlen($1) >= 4096 || strlen($5) >= 4096){
+        // Bad!
+        YPRINTF("Overflow Entry Detected!.\n");
+        goto yyabortlab;
     }
     strcpy(parsing_request->headers[parsing_request->header_count].header_name, $1);
 	strcpy(parsing_request->headers[parsing_request->header_count].header_value, $5);

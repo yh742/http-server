@@ -17,7 +17,7 @@ typedef struct
 {
     char header_name[4096];
     char header_value[4096];
-} Request_header;
+} Http_header;
 
 //HTTP Request Header
 typedef struct
@@ -25,11 +25,12 @@ typedef struct
     char http_version[50];
     char http_method[50];
     char http_uri[4096];
-    Request_header *headers;
+    Http_header* headers;
     int header_count;
+    char* body;
 } Request;
 
 Request* parse(char *buffer, int size,int socketFd);
 void free_requests(Request* req);
-
+int get_header_value(const Http_header* start_hdr, int count, const char* name);
 #endif //LISO_SERVER_PARSE_H
