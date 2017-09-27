@@ -1,19 +1,35 @@
 #include "parse.h"
 #include "helper.h"
+#include <sys/socket.h>
 
 /**
 * Given a char buffer returns the parsed request headers
 */
-Request * parse(char *buffer, int size, int socketFd) {
+
+static void dbg_print_response(Request* request, int sock_fd){
+    int index;
+    DBG_PRINT("Request Socket %d\n", sock_fd);
+    DBG_PRINT("Http Method %s\n",request->http_method);
+    DBG_PRINT("Http Version %s\n",request->http_version);
+    DBG_PRINT("Http Uri %s\n",request->http_uri);
+    DBG_PRINT("Request Header\n");
+    for(index = 0;index < request->header_count;index++) {
+        DBG_PRINT("Header Name: %s, Header Value: %s\n", request->headers[index].header_name,
+                  request->headers[index].header_value);
+    }
+}
+
+Request * parse(char *buffer, int size, int sock_fd) {
     //Differant states in the state machine
     enum {
         STATE_START = 0, STATE_CR, STATE_CRLF, STATE_CRLFCR, STATE_CRLFCRLF
     };
 
-    int i = 0, state;
+    int i = 0, state, head_index, length;
     size_t offset = 0;
     char ch;
     char buf[8192];
+    char* body;
     memset(buf, 0, 8192);
 
     state = STATE_START;
@@ -51,13 +67,42 @@ Request * parse(char *buffer, int size, int socketFd) {
     if (state == STATE_CRLFCRLF) {
         Request *request = (Request *) malloc(sizeof(Request));
         request->header_count=0;
-        //TODO You will need to handle resizing this in parser.y
         request->headers = (Http_header *) malloc(sizeof(Http_header)*1);
+        request->body = NULL;
         set_parsing_options(buf, i, request);
 
         if (yyparse() == SUCCESS) {
-            int i = get_header_value(request->headers, request->header_count, "Accept");
-            DBG_PRINT("Accept Index: %d", i);
+            dbg_print_response(&request, sock_fd);
+            // parse the body if one exists
+            if ((head_index = get_header_value(request->headers, request->header_count, "Content-Length")) != -1){
+
+                length = atoi(request->headers[head_index].header_value);
+                DBG_PRINT("Found Content Length: %d", length);
+                if (length != 0){
+                    char *body = malloc(length);
+
+                    // offset + length is greater than buffer size
+                    if (length > size - offset){
+                        int read_size = size - offset;
+                        if (read_size != 0){
+                            // copy rest of the buffer
+                            memcpy(body, buffer + offset, read_size);
+                            // read rest fromt he socket
+                            recv(sock_fd, body + read_size, length - read_size ,0);
+                        }
+                        else{
+                            // read the whole thing from the socket, edge case
+                            recv(sock_fd, body, length ,0);
+                        }
+                    }
+                    else{
+                        memcpy(body, buffer + offset, length);
+                    }
+                    DBG_PRINT("Content: %s", body);
+                }
+
+            }
+            request->body = body;
             return request;
         }
         else {
@@ -65,7 +110,6 @@ Request * parse(char *buffer, int size, int socketFd) {
             return NULL;
         }
     }
-    //TODO implement reading message body
     return NULL;
 }
 
@@ -80,6 +124,11 @@ int get_header_value(const Http_header* start_hdr, int count, const char* name){
 }
 
 void free_requests(Request* request) {
+    DBG_PRINT("Free up requests enter");
+    if (request->body != NULL){
+        free(request->body);
+    }
     free(request->headers);
     free(request);
+    DBG_PRINT("Free up requests exit");
 }

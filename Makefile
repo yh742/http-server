@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -I. -DYACCDEBUG
-DEPS = helper.h parse.h y.tab.h protocol.h
-OBJ = echo_server.o helper.o y.tab.o lex.yy.o parse.o protocol.o
+DEPS = helper.h parse.h y.tab.h protocol.h http_methods.h
+OBJ = echo_server.o helper.o y.tab.o lex.yy.o parse.o protocol.o http_methods.o
 FLAGS = -g -Wall
 
 default: all

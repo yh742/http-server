@@ -32,4 +32,10 @@ typedef struct
 
 int send_error(int sock_fd, Http_status status);
 
+int select_method(int sock_fd, Request* request);
+
+int check_http_version(const char* ver_string);
+
+void free_response(Response* response);
+
 #endif //LISO_SERVER_PROTOCOL_H

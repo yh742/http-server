@@ -36,7 +36,7 @@ int close_socket(int sock) {
 }
 
 int read_socket(char* buf, int sock_fd){
-    int readret, index;
+    int readret, index, res;
     readret = recv(sock_fd, buf, BUF_SIZE, 0);
     if (readret == 0){
         // if the other side has hung up
@@ -56,17 +56,15 @@ int read_socket(char* buf, int sock_fd){
         //close_socket(sock_fd);
         return 1;
     }
-    // print debug trace
-    DBG_PRINT("Request Socket %d\n", sock_fd);
-    DBG_PRINT("Http Method %s\n",request->http_method);
-    DBG_PRINT("Http Version %s\n",request->http_version);
-    DBG_PRINT("Http Uri %s\n",request->http_uri);
-    DBG_PRINT("Request Header\n");
-    for(index = 0;index < request->header_count;index++){
-        DBG_PRINT("Header Name: %s, Header Value: %s\n",request->headers[index].header_name,request->headers[index].header_value);
+    // check if http version is 1.1
+    if (check_http_version(request->http_version) == -1){
+        send_error(sock_fd, HTTP_VERSION_NOT_SUPPORTED);
     }
+    DBG_PRINT("select methods");
+    res = select_method(sock_fd, request);
+    // free up requests
     free_requests(request);
-    return 1;
+    return res;
 }
 
 int main(int argc, char* argv[]) {

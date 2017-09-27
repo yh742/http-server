@@ -30,7 +30,10 @@ typedef struct
     char* body;
 } Request;
 
-Request* parse(char *buffer, int size,int socketFd);
+Request* parse(char *buffer, int size, int sock_fd);
+
 void free_requests(Request* req);
+
+// returns index where header is found
 int get_header_value(const Http_header* start_hdr, int count, const char* name);
 #endif //LISO_SERVER_PARSE_H

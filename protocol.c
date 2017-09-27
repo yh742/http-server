@@ -4,7 +4,7 @@
 #include <string.h>
 #include "protocol.h"
 #include "helper.h"
-#include "parse.h"
+#include "http_methods.h"
 
 static const char NEW_LINE[] = "\\r\\n";
 static const char HTTP_VER[] = "HTTP/1.1";
@@ -175,5 +175,58 @@ int send_error(int sock_fd, Http_status status){
         DBG_ERROR("Invalid status code detected.");
         return -3;
     }
+    void free_response(Response* response);
     return 1;
+}
+
+int check_http_version(const char* ver_string){
+    if (strncmp(ver_string, HTTP_VER, strlen(HTTP_VER) + 1) != 0){
+        return -1;
+    }
+    return 0;
+}
+
+void dbg_print_response(Response* response){
+    int index;
+    DBG_PRINT("Http Method %s\n",response->http_status);
+    DBG_PRINT("Http Version %s\n",response->http_version);
+    DBG_PRINT("Http Uri %s\n",response->http_reason);
+    DBG_PRINT("response Header\n");
+    for(index = 0;index < response->header_count;index++){
+        DBG_PRINT("Header Name: %s, Header Value: %s\n",response->headers[index].header_name,response->headers[index].header_value);
+    }
+}
+
+int select_method(int sock_fd, Request* request){
+    int res;
+    Response response;
+    DBG_PRINT("Setup general header");
+    setup_general_header(&response, "OK", get_http_status(OK));
+    DBG_PRINT("Finish setting up general header");
+    if (!strncmp(request->http_method, "GET", 3)){
+        res = do_get(request, &response);
+    }
+    else if (!strncmp(request->http_method, "HEAD", 4)){
+        res = do_get(request, &response);
+    }
+    else if (!strncmp(request->http_method, "POST", 4)){
+        res = do_get(request, &response);
+    }
+    else{
+        send_error(sock_fd, NOT_IMPLEMENTED);
+        return 1;
+    }
+    // something failed when accessing methods
+    if (res != 1){
+        send_error(sock_fd, INTERNAL_SERVER_ERROR);
+    }
+    dbg_print_response(&response);
+    send_response_header(sock_fd, &response);
+    free_response(&response);
+    return 1;
+}
+
+void free_response(Response* response) {
+    free(response->headers);
+    //free(response);
 }
