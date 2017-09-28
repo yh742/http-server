@@ -23,8 +23,10 @@
 #include "parse.h"
 #include "protocol.h"
 
-#define ECHO_PORT 9999
+//#define ECHO_PORT 9999
 #define BUF_SIZE 8192
+
+static int ECHO_PORT = 9999;
 
 int close_socket(int sock) {
     if (close(sock))
@@ -69,6 +71,13 @@ int read_socket(char* buf, int sock_fd){
 }
 
 int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        return EXIT_FAILURE;
+    }
+    ECHO_PORT = atoi(argv[1]);
+    if (ECHO_PORT == 0){
+        return EXIT_FAILURE;
+    }
     int sock, client_sock, i, enable;
     ssize_t readret;
     socklen_t cli_size;

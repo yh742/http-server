@@ -17,7 +17,7 @@ y.tab.c: parser.y
 %.o: %.c $(DEPS)
 	$(CC) $(FLAGS) -c -o $@ $< $(CFLAGS)
 
-echo_server: $(OBJ)
+lisod: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 echo_client: echo_client.o
