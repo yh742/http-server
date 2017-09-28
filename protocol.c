@@ -37,7 +37,7 @@ static void setup_general_header(Response* response, const char* code, const cha
     strcpy(response->http_version, HTTP_VER);
     strcpy(response->http_status, code);
     strcpy(response->http_reason, reason);
-    response->header_count = 6;
+    response->header_count = 5;
     response->headers = (Http_header*)malloc(response->header_count*sizeof(Http_header));
     strcpy(response->headers[0].header_name, SERVER);
     strcpy(response->headers[0].header_value, SERVER_NAME);
@@ -46,8 +46,6 @@ static void setup_general_header(Response* response, const char* code, const cha
     strcpy(response->headers[2].header_name, CONNECTION);
     strcpy(response->headers[3].header_name, CONTENT_TYPE);
     strcpy(response->headers[4].header_name, CONTENT_LEN);
-    strcpy(response->headers[5].header_name, CONTENT_EN);
-    strcpy(response->headers[5].header_value, "gzip");
 
 }
 
@@ -179,18 +177,18 @@ int select_method(int sock_fd, Request* request){
     response->body = NULL;
     DBG_PRINT("Setup general header");
     setup_general_header(response, "200", get_http_status(OK));
-    response->header_count = 8;
+    response->header_count += 2;
     response->headers = realloc(response->headers, response->header_count* sizeof(Http_header));
     strcpy(response->headers[get_idx(CONNECTION)].header_value, KEEP_ALIVE);
-    strcpy(response->headers[6].header_name, KEEP_ALIVE);
+    strcpy(response->headers[5].header_name, KEEP_ALIVE);
     // dummy value
     strcpy(response->headers[get_idx(KEEP_ALIVE)].header_value, "timeout=5, max=1000");
-    strcpy(response->headers[7].header_name, LAST_MOD);
+    strcpy(response->headers[6].header_name, LAST_MOD);
 
     // check which method this is
     DBG_PRINT("Finish setting up general header");
     if (!strncmp(request->http_method, "GET", 3)){
-        res = do_get(request, response);
+        res = do_get(request, response, 0);
     }
     else if (!strncmp(request->http_method, "HEAD", 4)){
         res = do_head(request, response);
@@ -204,11 +202,12 @@ int select_method(int sock_fd, Request* request){
     }
 
     // something failed when accessing methods
-    if (res == 0){
+    if (res == 1){
         dbg_print_response(response);
         send_response_header(sock_fd, response);
         if (response-> body != NULL){
             sendfile(sock_fd, fileno(response->body), NULL, atoi(response->headers[get_idx(CONTENT_LEN)].header_value));
+            fclose(response->body);
         }
     }
     else if (res == -1){
@@ -216,6 +215,9 @@ int select_method(int sock_fd, Request* request){
     }
     else if (res == -2){
         send_error(sock_fd, INTERNAL_SERVER_ERROR);
+    }
+    else if (res == -3){
+        send_error(sock_fd, LENGTH_REQUIRED);
     }
     free_response(response);
     return 1;

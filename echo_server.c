@@ -61,8 +61,8 @@ int read_socket(char* buf, int sock_fd){
         send_error(sock_fd, HTTP_VERSION_NOT_SUPPORTED);
     }
     DBG_PRINT("select methods");
-    //res = select_method(sock_fd, request);
-    send_error(sock_fd, INTERNAL_SERVER_ERROR);
+    res = select_method(sock_fd, request);
+    //send_error(sock_fd, INTERNAL_SERVER_ERROR);
     // free up requests
     free_requests(request);
     return res;

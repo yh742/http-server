@@ -9,7 +9,7 @@
 
 char* get_mime_type(char* ext);
 
-int do_get(const Request* req, Response* response);
+int do_get(const Request* req, Response* response, int head);
 
 int do_head(const Request* req, Response* response);
 
