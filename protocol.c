@@ -1,4 +1,5 @@
 #include <sys/socket.h>
+#include <sys/sendfile.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,36 +8,6 @@
 #include "http_methods.h"
 
 static const char NEW_LINE[] = "\\r\\n";
-static const char HTTP_VER[] = "HTTP/1.1";
-static const char SERVER_NAME[] = "Liso/1.0";
-// For connection header file
-static const char KEEP_ALIVE[] = "keep-alive";
-static const char CLOSE[] = "close";
-
-static char* get_mime_type(char* ext) {
-    char* dot = strchr(ext, '.');
-    if (dot == NULL) {
-        return NULL;
-    }
-    else if (!strncmp(dot, ".html", 5)){
-        return "text/html";
-    }
-    else if (!strncmp(dot, ".css", 4)){
-        return "text/css";
-    }
-    else if (!strncmp(dot, ".png", 4)){
-        return "image/png";
-    }
-    else if (!strncmp(dot, ".jpg", 4)){
-        return "image/jpeg";
-    }
-    else if (!strncmp(dot, ".gif", 4)){
-        return "image/gif";
-    }
-    else {
-        return NULL;
-    }
-}
 
 static char* get_http_status(Http_status status){
     // okay to return string literals, not on stack
@@ -66,15 +37,18 @@ static void setup_general_header(Response* response, const char* code, const cha
     strcpy(response->http_version, HTTP_VER);
     strcpy(response->http_status, code);
     strcpy(response->http_reason, reason);
-    response->header_count = 5;
+    response->header_count = 6;
     response->headers = (Http_header*)malloc(response->header_count*sizeof(Http_header));
-    strcpy(response->headers[0].header_name, "Server");
+    strcpy(response->headers[0].header_name, SERVER);
     strcpy(response->headers[0].header_value, SERVER_NAME);
-    strcpy(response->headers[1].header_name, "Date");
+    strcpy(response->headers[1].header_name, DATE);
     get_current_time(&response->headers[1].header_value, sizeof(response->headers[1].header_value));
-    strcpy(response->headers[2].header_name, "Connection");
-    strcpy(response->headers[3].header_name, "Content-Type");
-    strcpy(response->headers[4].header_name, "Content-Length");
+    strcpy(response->headers[2].header_name, CONNECTION);
+    strcpy(response->headers[3].header_name, CONTENT_TYPE);
+    strcpy(response->headers[4].header_name, CONTENT_LEN);
+    strcpy(response->headers[5].header_name, CONTENT_EN);
+    strcpy(response->headers[5].header_value, "gzip");
+
 }
 
 // points to the next position
@@ -114,7 +88,7 @@ static int send_response_header(int sock_fd, Response* response){
     (*p_pos) = '\r';
     p_pos++;
     (*p_pos) = '\n';
-    DBG_PRINT("Response Header:\n%s", buffer);
+    DBG_PRINT("Response Header:%s", buffer);
     res = send(sock_fd, buffer, strlen(buffer), 0);
     DBG_PRINT("SEND RES: %d", res);
     return res;
@@ -131,15 +105,14 @@ static void format_error_response(Response* response, const char* code, const ch
     Content-Type: text/html
     */
     setup_general_header(response, code, reason);
-    strcpy(response->headers[2].header_value, CLOSE);
-    strcpy(response->headers[3].header_value, get_mime_type(".html"));
+    strcpy(response->headers[get_idx(CONNECTION)].header_value, CLOSE);
+    strcpy(response->headers[get_idx(CONTENT_TYPE)].header_value, get_mime_type(".html"));
     char buf[50];
     itoa(buf, strlen(response->body));
-    strcpy(response->headers[4].header_value, buf);
+    strcpy(response->headers[get_idx(CONTENT_LEN)].header_value, buf);
 }
 
 static void format_error_body(Response* response, char* body, Http_status status){
-    memset(body, 0, strlen(body));
     sprintf(body,
             "<head>\n"
             "<title>Error response</title>\n"
@@ -151,7 +124,7 @@ static void format_error_body(Response* response, char* body, Http_status status
             "</body>\n",
             (int)status, get_http_status(status));
     DBG_PRINT("Error Response Body:\n%s", body);
-    response->body = body;
+    response->body = (char*)body;
 }
 
 int send_error(int sock_fd, Http_status status){
@@ -159,6 +132,7 @@ int send_error(int sock_fd, Http_status status){
     char buf[50];
     char body[8192];
     memset(buf, '\0', sizeof(buf));
+    memset(body, '\0', sizeof(body));
     // All status code is 3 letters
     if (itoa(buf, (int)status) != 3){
         DBG_ERROR("Invalid status code detected.");
@@ -171,11 +145,12 @@ int send_error(int sock_fd, Http_status status){
         DBG_ERROR("Invalid status code detected.");
         return -2;
     }
-    if (send(sock_fd, response.body, strlen(response.body), 0) < 1){
+    int length = atoi(response.headers[4].header_value);
+    if (send(sock_fd, response.body, length, 0) < 1){
         DBG_ERROR("Invalid status code detected.");
         return -3;
     }
-    void free_response(Response* response);
+    free_response(&response);
     return 1;
 }
 
@@ -199,30 +174,50 @@ void dbg_print_response(Response* response){
 
 int select_method(int sock_fd, Request* request){
     int res;
-    Response response;
+    Response resp;
+    Response* response = &resp;
+    response->body = NULL;
     DBG_PRINT("Setup general header");
-    setup_general_header(&response, "OK", get_http_status(OK));
+    setup_general_header(response, "200", get_http_status(OK));
+    response->header_count = 8;
+    response->headers = realloc(response->headers, response->header_count* sizeof(Http_header));
+    strcpy(response->headers[get_idx(CONNECTION)].header_value, KEEP_ALIVE);
+    strcpy(response->headers[6].header_name, KEEP_ALIVE);
+    // dummy value
+    strcpy(response->headers[get_idx(KEEP_ALIVE)].header_value, "timeout=5, max=1000");
+    strcpy(response->headers[7].header_name, LAST_MOD);
+
+    // check which method this is
     DBG_PRINT("Finish setting up general header");
     if (!strncmp(request->http_method, "GET", 3)){
-        res = do_get(request, &response);
+        res = do_get(request, response);
     }
     else if (!strncmp(request->http_method, "HEAD", 4)){
-        res = do_get(request, &response);
+        res = do_head(request, response);
     }
     else if (!strncmp(request->http_method, "POST", 4)){
-        res = do_get(request, &response);
+        res = do_post(request, response);
     }
     else{
         send_error(sock_fd, NOT_IMPLEMENTED);
         return 1;
     }
+
     // something failed when accessing methods
-    if (res != 1){
+    if (res == 0){
+        dbg_print_response(response);
+        send_response_header(sock_fd, response);
+        if (response-> body != NULL){
+            sendfile(sock_fd, fileno(response->body), NULL, atoi(response->headers[get_idx(CONTENT_LEN)].header_value));
+        }
+    }
+    else if (res == -1){
+        send_error(sock_fd, NOT_FOUND);
+    }
+    else if (res == -2){
         send_error(sock_fd, INTERNAL_SERVER_ERROR);
     }
-    dbg_print_response(&response);
-    send_response_header(sock_fd, &response);
-    free_response(&response);
+    free_response(response);
     return 1;
 }
 

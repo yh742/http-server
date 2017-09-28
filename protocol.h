@@ -5,19 +5,8 @@
 #ifndef LISO_SERVER_PROTOCOL_H
 #define LISO_SERVER_PROTOCOL_H
 
+#include "http_defs.h"
 #include "parse.h"
-
-typedef enum
-{
-    OK = 200,
-    BAD_REQUEST =400,
-    NOT_FOUND = 404,
-    LENGTH_REQUIRED = 411,
-    INTERNAL_SERVER_ERROR = 500,
-    NOT_IMPLEMENTED = 501,
-    SERVICE_UNAVAILABLE = 503,
-    HTTP_VERSION_NOT_SUPPORTED = 505
-} Http_status;
 
 //HTTP Request Header
 typedef struct
@@ -27,7 +16,7 @@ typedef struct
     char http_reason[50];
     Http_header *headers;
     int header_count;
-    char* body;
+    void* body;
 } Response;
 
 int send_error(int sock_fd, Http_status status);

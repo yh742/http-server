@@ -36,7 +36,7 @@ int close_socket(int sock) {
 }
 
 int read_socket(char* buf, int sock_fd){
-    int readret, index, res;
+    int readret, res;
     readret = recv(sock_fd, buf, BUF_SIZE, 0);
     if (readret == 0){
         // if the other side has hung up
@@ -61,7 +61,8 @@ int read_socket(char* buf, int sock_fd){
         send_error(sock_fd, HTTP_VERSION_NOT_SUPPORTED);
     }
     DBG_PRINT("select methods");
-    res = select_method(sock_fd, request);
+    //res = select_method(sock_fd, request);
+    send_error(sock_fd, INTERNAL_SERVER_ERROR);
     // free up requests
     free_requests(request);
     return res;
@@ -117,18 +118,18 @@ int main(int argc, char* argv[]) {
     while (1) {
         // set read_fd_set to active file descriptor set
         read_fd_set = act_fd_set;
-        DBG_PRINT("Checkpoint %d.", 5);
+        //DBG_PRINT("Checkpoint %d.", 5);
         ERR_CHECK(select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL), "Select() failed.");
 
-        DBG_PRINT("Checkpoint %d.", 6);
+        //DBG_PRINT("Checkpoint %d.", 6);
         // check all file descriptor to see if any of them are set
         for (i = 0; i < FD_SETSIZE; i++) {
             if (FD_ISSET(i, &read_fd_set)){
-                DBG_PRINT("Checkpoint %d.", 7);
+                //DBG_PRINT("Checkpoint %d.", 7);
                 if (i == sock) {
                     // connection requested on original socket
                     cli_size = sizeof(cli_addr);
-                    DBG_PRINT("Checkpoint %d.", 8);
+                    //DBG_PRINT("Checkpoint %d.", 8);
                     ERR_CHECK(client_sock = accept(i, (struct sockaddr *) &cli_addr, &cli_size),
                               "Cannot accept incoming client connection.");
                     DBG_PRINT("Connected from host: %s, port: %d.",

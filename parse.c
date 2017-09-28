@@ -8,13 +8,13 @@
 
 static void dbg_print_response(Request* request, int sock_fd){
     int index;
-    DBG_PRINT("Request Socket %d\n", sock_fd);
-    DBG_PRINT("Http Method %s\n",request->http_method);
-    DBG_PRINT("Http Version %s\n",request->http_version);
-    DBG_PRINT("Http Uri %s\n",request->http_uri);
-    DBG_PRINT("Request Header\n");
+    DBG_PRINT("Request Socket %d", sock_fd);
+    DBG_PRINT("Http Method %s",request->http_method);
+    DBG_PRINT("Http Version %s",request->http_version);
+    DBG_PRINT("Http Uri %s",request->http_uri);
+    DBG_PRINT("Request Header");
     for(index = 0;index < request->header_count;index++) {
-        DBG_PRINT("Header Name: %s, Header Value: %s\n", request->headers[index].header_name,
+        DBG_PRINT("Header Name: %s, Header Value: %s", request->headers[index].header_name,
                   request->headers[index].header_value);
     }
 }
@@ -72,7 +72,7 @@ Request * parse(char *buffer, int size, int sock_fd) {
         set_parsing_options(buf, i, request);
 
         if (yyparse() == SUCCESS) {
-            dbg_print_response(&request, sock_fd);
+            dbg_print_response(request, sock_fd);
             // parse the body if one exists
             if ((head_index = get_header_value(request->headers, request->header_count, "Content-Length")) != -1){
 
@@ -99,10 +99,9 @@ Request * parse(char *buffer, int size, int sock_fd) {
                         memcpy(body, buffer + offset, length);
                     }
                     DBG_PRINT("Content: %s", body);
+                    request->body = body;
                 }
-
             }
-            request->body = body;
             return request;
         }
         else {

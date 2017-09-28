@@ -7,7 +7,6 @@
 
 #include <errno.h>
 
-
 #define STR_ERROR() \
     (errno == 0 ? "None" : strerror(errno))
 #define ERR_CHECK(A, M, ...) \

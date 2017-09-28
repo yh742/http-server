@@ -16,7 +16,7 @@ void get_current_time(char (*time_str)[], size_t maxsize) {
     struct tm* timeinfo;
 
     time(&t);
-    timeinfo = localtime(&t);
+    timeinfo = gmtime(&t);
     strftime(*time_str, maxsize, "%a, %d %b %Y %X %Z", timeinfo);
 }
 
