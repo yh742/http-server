@@ -22,6 +22,7 @@
 #include "helper.h"
 #include "parse.h"
 #include "protocol.h"
+#include "http_methods.h"
 
 //#define ECHO_PORT 9999
 #define BUF_SIZE 8192
@@ -71,10 +72,13 @@ int read_socket(char* buf, int sock_fd){
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
+    if (argc < 6) {
         return EXIT_FAILURE;
     }
     ECHO_PORT = atoi(argv[1]);
+    memcpy(LOG_FNAME, argv[3], strlen(argv[3]));
+    memcpy(WWW_PATH, argv[5], strlen(argv[5]));
+
     if (ECHO_PORT == 0){
         return EXIT_FAILURE;
     }

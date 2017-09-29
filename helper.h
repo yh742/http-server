@@ -16,6 +16,8 @@
 #define DBG_PRINT(...) \
     dbg_log_print(__FILE__, __LINE__, ##__VA_ARGS__)
 
+extern char LOG_FNAME[];
+
 // gets current time stamp
 void get_current_time(char (*time_str)[], size_t maxsize);
 

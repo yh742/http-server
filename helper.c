@@ -6,8 +6,9 @@
 #include <stdarg.h>
 #include "helper.h"
 
-#define LOG_FNAME "dbg.txt"
+//#define LOG_FNAME "dbg.txt"
 
+char LOG_FNAME[4096];
 static int access_count = 0;
 
 void get_current_time(char (*time_str)[], size_t maxsize) {

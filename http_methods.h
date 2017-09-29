@@ -7,6 +7,8 @@
 #include "parse.h"
 #include "protocol.h"
 
+extern char WWW_PATH[4096];
+
 char* get_mime_type(char* ext);
 
 int do_get(const Request* req, Response* response, int head);

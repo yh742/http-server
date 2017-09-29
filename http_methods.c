@@ -9,7 +9,7 @@
 #include "http_defs.h"
 #include "parse.h"
 
-static const char WWW_PATH[] = "./www";
+char WWW_PATH[4096] = "./www";
 static const char IDX_PATH[] = "index.html";
 
 // return -1 for not exist
@@ -33,7 +33,6 @@ int do_get(const Request* req, Response* response, int head){
     // check if file exists
     if (access(path, F_OK) == -1){
         DBG_PRINT("Path does not exist: %s", path);
-        free(path);
         return -1;
     }
 
@@ -43,7 +42,6 @@ int do_get(const Request* req, Response* response, int head){
         file = fopen(path, "r");
         if (file == NULL) {
             DBG_PRINT("Resource errors.");
-            free(path);
             return -2;
         }
         response->body = file;
@@ -70,7 +68,7 @@ int do_head(const Request* req, Response* response){
 }
 
 int do_post(const Request* req, Response* response){
-    if (get_header_value(req->headers, req->header_count, CONTENT_LEN)){
+    if (get_header_value(req->headers, req->header_count, CONTENT_LEN) == -1){
         return -3;
     }
     itoa(response->headers[get_idx(CONTENT_LEN)].header_value, 0);

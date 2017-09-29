@@ -206,7 +206,12 @@ int select_method(int sock_fd, Request* request){
         dbg_print_response(response);
         send_response_header(sock_fd, response);
         if (response-> body != NULL){
-            sendfile(sock_fd, fileno(response->body), NULL, atoi(response->headers[get_idx(CONTENT_LEN)].header_value));
+            int bytes, offset = 0;
+            char buffer[8192];
+            while (0 < (bytes = fread(buffer, 1, sizeof(buffer), response->body))){
+                send(sock_fd, buffer, bytes, 0);
+            }
+            //sendfile(sock_fd, fileno(response->body), NULL, atoi(response->headers[get_idx(CONTENT_LEN)].header_value));
             fclose(response->body);
         }
     }
