@@ -62,6 +62,3 @@ There are several ways in which I deployed to test my project:
 		fi
 	done
 ```
-
-
--
